@@ -656,7 +656,8 @@
         { "id": 7, "name": "Облепиха быстрозамороженная Маркет Перекрёсток, 300г", "image": "https://imgur.com/04EaSbN.png", "link": "https://www.perekrestok.ru/cat/418/p/oblepiha-bystrozamorozennaa-market-perekrestok-300g-4135307", "quantity": 1, "price": 230, "unit": "шт", "supplier": "Перекресток" },
         { "id": 8, "name": "Смородина черная быстрозамороженная Маркет, 300г", "image": "https://imgur.com/kE2u05Q.png", "link": "https://www.perekrestok.ru/cat/418/p/smorodina-cernaa-bystrozamorozennaa-market-300g-4272209", "quantity": 3, "price": 390, "unit": "шт", "supplier": "Перекресток" },
         { "id": 9, "name": "Mята свежая Маркет Fresh, 25г", "image": "https://imgur.com/xNbWITo.png", "link": "https://www.perekrestok.ru/cat/366/p/mata-svezaa-market-fresh-25g-4295463", "quantity": 3, "price": 90, "unit": "шт", "supplier": "Перекресток" },
-{ "id": 11, "name": "Ананас Артфрут свежий нарезанный, 500г", "image": "https://imgur.com/bsfPW2Q.png", "link": "https://www.perekrestok.ru/cat/367/p/ananas-artfrut-svezij-narezannyj-500g-4395252", "quantity": 1, "price": 600, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 10, "name": "Смузи с грушей и шпинатом с ароматом мяты Перекрёсток Select, 250мл", "image": "https://imgur.com/InKYPMr.png", "link": "https://www.perekrestok.ru/cat/1118/p/smuzi-s-grusej-i-spinatom-s-aromatom-maty-perekrestok-select-250ml-4352870", "quantity": 1, "price": 150, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 11, "name": "Ананас Артфрут свежий нарезанный, 500г", "image": "https://imgur.com/bsfPW2Q.png", "link": "https://www.perekrestok.ru/cat/367/p/ananas-artfrut-svezij-narezannyj-500g-4395252", "quantity": 1, "price": 600, "unit": "шт", "supplier": "Перекресток" },
       ];
 
     // Определение групп продуктов с SVG иконками
@@ -670,7 +671,7 @@
                 <rect x="30" y="45" width="40" height="10" rx="5" fill="#4361ee"/>
                 <rect x="30" y="60" width="40" height="10" rx="5" fill="#4361ee"/>
               </svg>`,
-        getData: () => [...fruitData, ...veggieData, ...berryData, ...smuziData]
+        getData: () => [...fruitData, ...veggieData, ...berryData]
       },
       {
         id: "fruits",
@@ -785,7 +786,7 @@
         svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <path d="M50 75 L25 52 C10 39, 15 15, 35 15 C45 15, 50 25, 50 25 C50 25, 55 15, 65 15 C85 15, 90 39, 75 52 Z" fill="#ff6b6b" stroke="#e53935" stroke-width="2"/>
               </svg>`,
-        getData: () => [...fruitData, ...veggieData, ...berryData, ...smuziData].filter(item => item.favorite)
+        getData: () => [...fruitData, ...veggieData, ...berryData].filter(item => item.favorite)
       }
     ];
 
@@ -995,7 +996,7 @@ function addEventListeners() {
 function updateQuantity(itemId, change) {
   // Найти товар во всех группах данных
   let foundItem = null;
-  let allData = [...fruitData, ...veggieData, ...berryData, ...smuziData];
+  let allData = [...fruitData, ...veggieData, ...berryData];
   
   foundItem = allData.find(item => item.id === itemId);
   
@@ -1019,7 +1020,7 @@ function updateQuantity(itemId, change) {
 function toggleFavorite(itemId) {
   // Найти товар во всех группах данных
   let foundItem = null;
-  let allData = [...fruitData, ...veggieData, ...berryData, ...smuziData];
+  let allData = [...fruitData, ...veggieData, ...berryData];
   
   foundItem = allData.find(item => item.id === itemId);
   
