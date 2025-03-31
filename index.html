@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Корзина товаров с группами</title>
+  <meta name="description" content="Современная корзина товаров с группами продуктов">
+  <style>
+    :root {
+      --primary-color: #4361ee;
+      --primary-light: #eef2ff;
+      --secondary-color: #3a0ca3;
+      --success-color: #2ec4b6;
+      --danger-color: #e63946;
+      --text-color: #2b2d42;
+      --text-light: #8d99ae;
+      --bg-color: #f8f9fa;
+      --card-color: #ffffff;
+      --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 6px 12px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+      --border-radius: 16px;
+      --border-radius-sm: 8px;
+      --transition-normal: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-bounce: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      padding: 20px;
+      line-height: 1.5;
+    }
+    
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      position: relative;
+    }
+    
+    .cart-header {
+      padding: 20px 0;
+      margin-bottom: 30px;
+    }
+    
+    .cart-title {
+      font-size: 28px;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 10px;
+      color: var(--text-color);
+    }
+    
+    .cart-subtitle {
+      text-align: center;
+      color: var(--text-light);
+      font-size: 16px;
+    }
+    
+    /* Product Groups */
+    .product-groups-container {
+      position: relative;
+      margin-bottom: 40px;
+    }
+    
+    .scroll-shadow-left,
+    .scroll-shadow-right {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 80px;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .scroll-shadow-left {
+      left: 0;
+      background: linear-gradient(90deg, var(--bg-color) 0%, rgba(248, 249, 250, 0) 100%);
+    }
+    
+    .scroll-shadow-right {
+      right: 0;
+      background: linear-gradient(90deg, rgba(248, 249, 250, 0) 0%, var(--bg-color) 100%);
+    }
+    
+    .show-shadow {
+      opacity: 1;
+    }
+    
+    .product-groups {
+      display: flex;
+      gap: 15px;
+      overflow-x: auto;
+      padding: 10px 5px;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+    }
+    
+    .product-groups::-webkit-scrollbar {
+      display: none;
+    }
+    
+    .group-card {
+      min-width: 150px;
+      background: var(--card-color);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-sm);
+      padding: 20px 15px;
+      cursor: pointer;
+      transition: var(--transition-bounce);
+      text-align: center;
+      position: relative;
+      border: 2px solid transparent;
+    }
+    
+    .group-card:hover {
+      transform: translateY(-5px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .group-card.active {
+      border-color: var(--primary-color);
+      background-color: var(--primary-light);
+    }
+    
+    .group-card svg {
+      width: 100%;
+      height: 80px;
+      margin-bottom: 12px;
+      transition: var(--transition-normal);
+    }
+    
+    .group-card:hover svg {
+      transform: scale(1.05);
+    }
+    
+    .group-card h3 {
+      margin: 0;
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-color);
+    }
+    
+    .group-card .item-count {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--primary-color);
+      color: white;
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    
+    /* Product Card */
+    .products-container {
+      position: relative;
+    }
+    
+    .card {
+      display: flex;
+      align-items: center;
+      background: var(--card-color);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 20px;
+      transition: var(--transition-normal);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeSlideIn 0.5s forwards;
+    }
+    
+    @keyframes fadeSlideIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .card-image {
+      width: 100px;
+      height: 100px;
+      border-radius: var(--border-radius-sm);
+      object-fit: cover;
+      margin-right: 20px;
+      padding: 10px;
+      background-color: #f5f5f5;
+      transition: var(--transition-normal);
+    }
+    
+    .card:hover .card-image {
+      transform: scale(1.05);
+    }
+    
+    .card-content {
+      flex-grow: 1;
+    }
+    
+    .card-title {
+      margin: 0 0 8px;
+      font-size: 18px;
+      font-weight: 600;
+    }
+    
+    .card-meta {
+      margin: 4px 0;
+      font-size: 14px;
+      color: var(--text-light);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .supplier-badge {
+      background-color: var(--primary-light);
+      color: var(--primary-color);
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    
+    .price-tag {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--primary-color);
+    }
+    
+    .quantity-controls {
+      display: flex;
+      align-items: center;
+      margin-top: 12px;
+    }
+    
+    .quantity-btn {
+      background-color: var(--primary-color);
+      color: white;
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-normal);
+    }
+    
+    .quantity-btn:hover {
+      background-color: var(--secondary-color);
+      transform: scale(1.1);
+    }
+    
+    .quantity-value {
+      margin: 0 15px;
+      font-size: 16px;
+      font-weight: 500;
+      min-width: 30px;
+      text-align: center;
+    }
+    
+    .card-actions {
+      min-width: 140px;
+      text-align: right;
+    }
+    
+    .card-price {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-color);
+      margin-bottom: 10px;
+    }
+    
+    .card-price span {
+      font-size: 14px;
+      color: var(--text-light);
+      font-weight: 400;
+    }
+    
+    .favorite-btn {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: auto;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      transition: var(--transition-normal);
+    }
+    
+    .favorite-btn:hover {
+      background: #f0f0f0;
+      transform: scale(1.1);
+    }
+    
+    .favorite-btn.active {
+      color: var(--danger-color);
+    }
+    
+    .favorite-icon {
+      fill: none;
+      stroke: currentColor;
+      stroke-width: 2;
+      transition: var(--transition-normal);
+    }
+    
+    .favorite-btn.active .favorite-icon {
+      fill: var(--danger-color);
+    }
+    
+    /* Summary */
+    .summary {
+      background: var(--card-color);
+      padding: 20px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-lg);
+      font-size: 16px;
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      width: 100%;
+      max-width: 90%;
+      transition: var(--transition-normal);
+    }
+    
+    .summary-filters {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      padding: 10px 0;
+      margin-bottom: 15px;
+      border-bottom: 1px solid #eee;
+    }
+    
+    .supplier-filter {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      padding: 5px;
+      border-radius: var(--border-radius-sm);
+      background: var(--card-color);
+      box-shadow: var(--shadow-sm);
+      transition: var(--transition-normal);
+      border: 2px solid transparent;
+    }
+    
+    .supplier-filter:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-md);
+    }
+    
+    .supplier-filter img {
+      width: 80px;
+      height: auto;
+      border-radius: var(--border-radius-sm);
+    }
+    
+    .supplier-filter.selected {
+      border-color: var(--primary-color);
+      background-color: var(--primary-light);
+    }
+    
+    .summary-content {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 15px;
+    }
+    
+    .summary-info {
+      flex: 1;
+      min-width: 200px;
+    }
+    
+    .summary-info h3 {
+      margin: 5px 0;
+      font-size: 18px;
+    }
+    
+    .summary-info p {
+      color: var(--text-light);
+      font-size: 14px;
+      margin: 5px 0;
+    }
+    
+    .summary-action {
+      flex: 1;
+      text-align: right;
+      min-width: 200px;
+    }
+    
+    .checkout-btn {
+      background: var(--success-color);
+      color: white;
+      border: none;
+      border-radius: var(--border-radius-sm);
+      padding: 12px 25px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: var(--transition-normal);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .checkout-btn:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: var(--shadow-md);
+    }
+    
+    /* Empty cart */
+    .empty-cart {
+      text-align: center;
+      margin: 50px 0;
+      padding: 40px;
+      background: var(--card-color);
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-sm);
+      animation: fadeIn 0.5s ease;
+    }
+    
+    .empty-cart h3 {
+      color: var(--text-color);
+      margin-bottom: 15px;
+      font-size: 20px;
+    }
+    
+    .empty-cart p {
+      color: var(--text-light);
+      margin-bottom: 20px;
+    }
+    
+    .empty-cart svg {
+      width: 100px;
+      height: 100px;
+      margin-bottom: 20px;
+      color: var(--primary-light);
+    }
+    
+    /* Page padding for fixed summary */
+    main {
+      padding-bottom: 260px;
+    }
+    
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    /* Toast notification */
+    .toast {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: var(--card-color);
+      color: var(--text-color);
+      padding: 15px 25px;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-lg);
+      z-index: 2000;
+      transform: translateX(120%);
+      transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .toast.show {
+      transform: translateX(0);
+    }
+    
+    .toast.success {
+      border-left: 4px solid var(--success-color);
+    }
+    
+    .toast.info {
+      border-left: 4px solid var(--primary-color);
+    }
+    
+    .toast-icon {
+      background: var(--primary-light);
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .toast.success .toast-icon {
+      background: rgba(46, 196, 182, 0.1);
+      color: var(--success-color);
+    }
+    
+    .toast.info .toast-icon {
+      background: rgba(67, 97, 238, 0.1);
+      color: var(--primary-color);
+    }
+    
+    /* Media Queries */
+    @media (max-width: 768px) {
+      .card {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .card-image {
+        margin-right: 0;
+        margin-bottom: 15px;
+      }
+      
+      .card-actions {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 15px;
+      }
+      
+      .summary-content {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      
+      .summary-action {
+        width: 100%;
+        text-align: center;
+      }
+      
+      .checkout-btn {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Cart Header -->
+    <header class="cart-header">
+      <h1 class="cart-title">Корзина товаров</h1>
+      <p class="cart-subtitle">Выберите группу продуктов или фильтр поставщиков</p>
+    </header>
+
+    <!-- Product Groups with Scroll Shadows -->
+    <div class="product-groups-container">
+      <div class="scroll-shadow-left"></div>
+      <div class="product-groups" id="productGroups">
+        <!-- Groups will be added via JavaScript -->
+      </div>
+      <div class="scroll-shadow-right"></div>
+    </div>
+
+    <!-- Products Container -->
+    <main class="products-container">
+      <div id="cart"></div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+      <div class="toast-icon">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+      </div>
+      <div class="toast-content" id="toastContent">Товар добавлен в избранное</div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary">
+      <div class="summary-filters" id="supplierFilter">
+        <div class="supplier-filter" data-supplier="Пятерочка">
+          <img src="https://www.altaykvas.ru/wp-content/uploads/2020/01/9c52b83e8d060ec04c5a03ae40693466.png" alt="Пятерочка">
+        </div>
+        <div class="supplier-filter" data-supplier="Перекресток">
+          <img src="https://upload.wikimedia.org/wikipedia/ru/f/f2/Perekrestok_supermarket_logo_2020.jpg" alt="Перекресток">
+        </div>
+      </div>
+      <div class="summary-content">
+        <div class="summary-info">
+          <h3>Всего товаров: <span id="total-items">0</span></h3>
+          <h3>Общая стоимость: <span id="total-price">0</span>₽</h3>
+          <p>Адрес самовывоза: <strong>ул. Примерная, 10</strong></p>
+        </div>
+        <div class="summary-action">
+          <button class="checkout-btn" id="checkoutBtn">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="9" cy="21" r="1"></circle>
+              <circle cx="20" cy="21" r="1"></circle>
+              <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+            </svg>
+            Оформить заказ
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Группы продуктов
+    const fruitData = [
+      { "id": 2, "name": "Авокадо Хасс спелое, 2шт", "image": "https://imgur.com/ZXnIBE3.png", "link": "https://www.perekrestok.ru/cat/366/p/avokado-hass-speloe-2st-3356275", "quantity": 3, "price": 220, "unit": "шт", "supplier": "Перекресток", "favorite": false },
+      { "id": 4, "name": "Киви, 1кг", "image": "https://imgur.com/kyWqwnt.png", "link": "https://www.perekrestok.ru/cat/367/p/kivi-1532", "quantity": 1, "price": 340, "unit": "кг", "supplier": "Перекресток", "favorite": false },
+      { "id": 5, "name": "Лимон, 400г", "image": "https://imgur.com/ZVOf3ZF.png", "link": "https://www.perekrestok.ru/cat/367/p/kivi-1532", "quantity": 1, "price": 76, "unit": "шт", "supplier": "Перекресток", "favorite": false },
+      { "id": 6, "name": "Ананас медовый, 2кг", "image": "https://imgur.com/w4vIsCl.png", "link": "https://www.perekrestok.ru/cat/367/p/ananas-medovyj-4099977", "quantity": 2, "price": 335, "unit": "кг", "supplier": "Перекресток", "favorite": false },
+      { "id": 11, "name": "Ананас Артфрут свежий нарезанный, 500г", "image": "https://imgur.com/bsfPW2Q.png", "link": "https://www.perekrestok.ru/cat/367/p/ananas-artfrut-svezij-narezannyj-500g-4395252", "quantity": 1, "price": 600, "unit": "шт", "supplier": "Перекресток", "favorite": true }
+    ];
+
+    const veggieData = [
+      { "id": 1, "name": "Брокколи быстрозамороженная Маркет, 400г", "image": "https://imgur.com/7pJoDqS.png", "link": "https://www.perekrestok.ru/cat/418/p/brokkoli-bystrozamorozennaa-market-400g-3489151", "quantity": 3, "price": 200, "unit": "шт", "supplier": "Перекресток", "favorite": false },
+      { "id": 3, "name": "Имбирь, 100г", "image": "https://imgur.com/V198L2t.png", "link": "https://www.perekrestok.ru/cat/366/p/imbir-3218215", "quantity": 1, "price": 75, "unit": "шт", "supplier": "Перекресток", "favorite": true },
+      { "id": 9, "name": "Mята свежая Маркет Fresh, 25г", "image": "https://imgur.com/xNbWITo.png", "link": "https://www.perekrestok.ru/cat/366/p/mata-svezaa-market-fresh-25g-4295463", "quantity": 3, "price": 90, "unit": "шт", "supplier": "Перекресток", "favorite": false }
+    ];
+
+    const berryData = [
+      { "id": 7, "name": "Облепиха быстрозамороженная Маркет Перекрёсток, 300г", "image": "https://imgur.com/04EaSbN.png", "link": "https://www.perekrestok.ru/cat/418/p/oblepiha-bystrozamorozennaa-market-perekrestok-300g-4135307", "quantity": 1, "price": 230, "unit": "шт", "supplier": "Перекресток", "favorite": false },
+      { "id": 8, "name": "Смородина черная быстрозамороженная Маркет, 300г", "image": "https://imgur.com/kE2u05Q.png", "link": "https://www.perekrestok.ru/cat/418/p/smorodina-cernaa-bystrozamorozennaa-market-300g-4272209", "quantity": 3, "price": 390, "unit": "шт", "supplier": "Перекресток", "favorite": true },
+      { "id": 10, "name": "Смузи с грушей и шпинатом с ароматом мяты Перекрёсток Select, 250мл", "image": "https://imgur.com/InKYPMr.png", "link": "https://www.perekrestok.ru/cat/1118/p/smuzi-s-grusej-i-spinatom-s-aromatom-maty-perekrestok-select-250ml-4352870", "quantity": 1, "price": 150, "unit": "шт", "supplier": "Перекресток", "favorite": false }
+    ];
+
+    const smuziData = [
+        { "id": 1, "name": "Брокколи быстрозамороженная Маркет, 400г", "image": "https://imgur.com/7pJoDqS.png", "link": "https://www.perekrestok.ru/cat/418/p/brokkoli-bystrozamorozennaa-market-400g-3489151", "quantity": 3, "price": 200, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 2, "name": "Авокадо Хасс спелое, 2шт", "image": "https://imgur.com/ZXnIBE3.png", "link": "https://www.perekrestok.ru/cat/366/p/avokado-hass-speloe-2st-3356275", "quantity": 3, "price": 220, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 3, "name": "Имбирь, 100г", "image": "https://imgur.com/V198L2t.png", "link": "https://www.perekrestok.ru/cat/366/p/imbir-3218215", "quantity": 1, "price": 75, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 4, "name": "Киви, 1кг", "image": "https://imgur.com/kyWqwnt.png", "link": "https://www.perekrestok.ru/cat/367/p/kivi-1532", "quantity": 1, "price": 340, "unit": "кг", "supplier": "Перекресток" },
+        { "id": 5, "name": "Лимон, 400г", "image": "https://imgur.com/ZVOf3ZF.png", "link": "https://www.perekrestok.ru/cat/367/p/kivi-1532", "quantity": 1, "price": 76, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 6, "name": "Ананас медовый, 2кг", "image": "https://imgur.com/w4vIsCl.png", "link": "https://www.perekrestok.ru/cat/367/p/ananas-medovyj-4099977", "quantity": 2, "price": 335, "unit": "кг", "supplier": "Перекресток" },
+        { "id": 7, "name": "Облепиха быстрозамороженная Маркет Перекрёсток, 300г", "image": "https://imgur.com/04EaSbN.png", "link": "https://www.perekrestok.ru/cat/418/p/oblepiha-bystrozamorozennaa-market-perekrestok-300g-4135307", "quantity": 1, "price": 230, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 8, "name": "Смородина черная быстрозамороженная Маркет, 300г", "image": "https://imgur.com/kE2u05Q.png", "link": "https://www.perekrestok.ru/cat/418/p/smorodina-cernaa-bystrozamorozennaa-market-300g-4272209", "quantity": 3, "price": 390, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 9, "name": "Mята свежая Маркет Fresh, 25г", "image": "https://imgur.com/xNbWITo.png", "link": "https://www.perekrestok.ru/cat/366/p/mata-svezaa-market-fresh-25g-4295463", "quantity": 3, "price": 90, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 10, "name": "Смузи с грушей и шпинатом с ароматом мяты Перекрёсток Select, 250мл", "image": "https://imgur.com/InKYPMr.png", "link": "https://www.perekrestok.ru/cat/1118/p/smuzi-s-grusej-i-spinatom-s-aromatom-maty-perekrestok-select-250ml-4352870", "quantity": 1, "price": 150, "unit": "шт", "supplier": "Перекресток" },
+        { "id": 11, "name": "Ананас Артфрут свежий нарезанный, 500г", "image": "https://imgur.com/bsfPW2Q.png", "link": "https://www.perekrestok.ru/cat/367/p/ananas-artfrut-svezij-narezannyj-500g-4395252", "quantity": 1, "price": 600, "unit": "шт", "supplier": "Перекресток" },
+      ];
+
+    // Определение групп продуктов с SVG иконками
+    const productGroups = [
+      {
+        id: "all",
+        name: "Все товары",
+        svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <rect x="20" y="20" width="60" height="60" rx="10" fill="#e3f2fd" stroke="#4361ee" stroke-width="2"/>
+                <rect x="30" y="30" width="40" height="10" rx="5" fill="#4361ee"/>
+                <rect x="30" y="45" width="40" height="10" rx="5" fill="#4361ee"/>
+                <rect x="30" y="60" width="40" height="10" rx="5" fill="#4361ee"/>
+              </svg>`,
+        getData: () => [...fruitData, ...veggieData, ...berryData]
+      },
+      {
+        id: "fruits",
+        name: "Фрукты",
+        svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="50" cy="50" r="30" fill="#ffeb3b" stroke="#ff9e00" stroke-width="2"/>
+                <path d="M50 20 L55 30 L45 30 Z" fill="#4caf50"/>
+                <path d="M65 35 C75 45, 75 55, 65 65" fill="none" stroke="#ff9e00" stroke-width="2"/>
+                <circle cx="40" cy="45" r="3" fill="#ff7b00"/>
+                <circle cx="60" cy="45" r="3" fill="#ff7b00"/>
+              </svg>`,
+        getData: () => fruitData
+      },
+      {
+        id: "smuzi",
+        name: "Смузи",
+        svg: `<svg xmlns="http://www.w3.org/2000/svg" id="Layer_1" x="0" y="0" enable-background="new 0 0 38 38" version="1.1" viewBox="0 0 38 38" xml:space="preserve"><g id="_x34_4"><linearGradient id="SVGID_1_" x1="20.889" x2="20.756" y1="29.348" y2="32.141" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#65718a"/><stop offset=".886" stop-color="#505367"/></linearGradient><path fill="url(#SVGID_1_)" d="M28.0581303,31.0416412c-4.7968979,1.1504707-9.5548172,1.1211929-14.25424,0
+		c-1.4137363-0.34128-2.2522068-1.7744751-1.9499645-3.1882114c0.0403852-0.1701221,0.4867926-2.0505867,0.4582729-1.9304466
+		l0.2437449-1.0042591c0.4192362,1.0822754,1.3746996,1.891468,2.564209,2.0669575
+		c3.7536592,0.565506,7.5755739,0.5362873,11.4560442-0.0194588c0.9261856-0.1365128,1.7256794-0.6435223,2.2424469-1.3747597
+		c0.1950092-0.2729645,0.3509808-0.5752068,0.4485149-0.8969669l0.7312355,3.1199551
+		c0.0194607,0.0389786,0.0292187,0.0779572,0.0292187,0.1267529C30.2811184,29.3256626,29.4426479,30.7101212,28.0581303,31.0416412
+		z"/><g><path fill="none" d="M21.0173168,4.5700016c0.0400372,0,0.0800762-0.0100098,0.1201134-0.0100098
+			c0.0800762,0,0.1701603,0.0100098,0.2502365,0.0300283"/><linearGradient id="SVGID_2_" x1="16.735" x2="20.306" y1="7.793" y2="8.356" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#ff9835"/><stop offset=".694" stop-color="#ffd26e"/><stop offset="1" stop-color="#ffec87"/></linearGradient><path fill="url(#SVGID_2_)" d="M16.0576839,11.5351772c-0.0034218,0.0155182-0.0053768,0.0305471-0.0087357,0.0461254h1.952343
+			c0.7432556-2.8275595,1.6934929-5.2685232,3.0179253-7.0095468C18.9823799,4.6892986,16.8696079,7.8719907,16.0576839,11.5351772z
+			"/><linearGradient id="SVGID_3_" x1="18.393" x2="22.355" y1="8.056" y2="8.105" gradientUnits="userSpaceOnUse"><stop offset=".092" stop-color="#ff9532"/><stop offset=".711" stop-color="#ffd16c"/><stop offset=".993" stop-color="#ffec87"/></linearGradient><path fill="url(#SVGID_3_)" d="M21.3899879,4.5850744c-0.08498-0.0106301-0.1700211-0.0244374-0.2547569-0.0244374
+			c-0.0385494,0-0.077404,0.0088587-0.1160145,0.0111189c-1.3244324,1.7410235-2.2746696,4.1819873-3.0179253,7.0095468h6.0442181
+			C23.4420967,9.0911589,22.5822144,6.7448888,21.3899879,4.5850744z"/><linearGradient id="SVGID_4_" x1="21.507" x2="25.445" y1="9.026" y2="7.411" gradientUnits="userSpaceOnUse"><stop offset=".092" stop-color="#ff9532"/><stop offset=".673" stop-color="#ffcd69"/><stop offset=".993" stop-color="#ffec87"/></linearGradient><path fill="url(#SVGID_4_)" d="M26.2215137,11.5813026c-0.0034199-0.0155783-0.0053139-0.0306072-0.0087357-0.0461254
+			c-0.7934742-3.5800395-2.8295746-6.7002335-4.8227901-6.9501028c1.1922264,2.1598144,2.0521088,4.5060844,2.6555214,6.9962282
+			H26.2215137z"/><linearGradient id="SVGID_5_" x1="25.696" x2="28.096" y1="6.545" y2="6.545" gradientUnits="userSpaceOnUse"><stop offset=".092" stop-color="#ff9532"/><stop offset=".711" stop-color="#ffd16c"/><stop offset=".993" stop-color="#ffec87"/></linearGradient><path fill="url(#SVGID_5_)" d="M25.9842587,8.1200542c0.1026611-0.0716772,0.1478844-0.3344822,0.1747589-0.410306
+			c0.301302-0.8500834,0.8961506-0.7514167,1.4267521-1.0256863c0.5914726-0.3057351,0.6943245-1.0971479,0.170496-1.535255
+			c-0.3293591-0.2754588-0.8819828-0.2348819-1.2446575-0.0474243c-0.457983,0.2367301-0.6800995,0.6912041-0.7601318,1.1821461
+			c-0.0776768,0.4764833-0.0717793,1.0128403,0.0050964,1.4899874c0.0133343,0.0827641,0.0290318,0.2960038,0.1134624,0.3462262
+			C25.9145107,8.1461859,25.9521885,8.1424465,25.9842587,8.1200542z"/></g><linearGradient id="SVGID_6_" x1="-809.502" x2="-807.045" y1="8.367" y2="8.367" gradientTransform="matrix(-1 0 0 1 -794.473 0)" gradientUnits="userSpaceOnUse"><stop offset=".092" stop-color="#ff9532"/><stop offset=".711" stop-color="#ffd16c"/><stop offset=".993" stop-color="#ffec87"/></linearGradient><path fill="url(#SVGID_6_)" d="M14.5550718,9.5601864c-0.3085155-0.8704338-0.9176044-0.7694044-1.460907-1.0502405
+		c-0.6056318-0.3130541-0.710947-1.1234131-0.1745777-1.5720081c0.337244-0.282053,0.9030962-0.2405047,1.2744541-0.0485597
+		c0.4689455,0.2423978,0.6963806,0.7077518,0.7783289,1.2104459c0.0795355,0.4878902,0.0734959,1.0370874-0.0052195,1.5256577
+		c-0.0136538,0.0847454-0.029726,0.3030901-0.1161785,0.3545141C14.6667337,10.0895386,14.6037893,9.6976366,14.5550718,9.5601864z"/><path fill="#ffdf3d" d="M18.6287518,26.3418198c0.8298016,0.0639534,1.6374989-0.0176964,2.4574585-0.0024986
+		c0.9287128,0.0172157,1.8591061,0.0211964,2.7780304-0.1347351c2.379282-0.4037418,4.3352032-2.1510963,4.2987385-4.7163963
+		c-0.0072918-0.5128918-0.1457119-1.0927906-0.5946941-1.3408279c-0.548748-0.3031521-1.2721367,0.0937557-1.5445957,0.658371
+		c-0.272459,0.5646133-0.2208271,1.2248592-0.163681,1.849165c0.0269413,0.2943039,0.0219307,0.5680504-0.2535686,0.7507076
+		c-0.1594505,0.1057167-0.3560505,0.1430931-0.5473614,0.1425571c-0.5214958-0.0014629-1.0155449-0.2687817-1.2804375-0.7225304
+		c-0.1540604-0.2638988-0.2208042-0.5681381-0.3284836-0.854208c-0.2832661-0.7524109-1.1172714-1.1364117-1.8810844-1.1461487
+		c-0.9485569-0.0120735-1.5433235,0.6166668-1.9535675,1.3989964c-0.4386215,0.83638-1.4515648,1.3601284-2.2925034,0.7285442
+		c-0.8276749-0.6216221-0.8234634-2.1869583-2.1310225-2.1491299c-0.2531462,0.0073242-0.5129242,0.1236305-0.6443644,0.3401031
+		c-0.123745,0.2037983-0.1184139,0.4568481-0.1304426,0.694973c-0.0236225,0.4676018-0.2778368,0.6532402-0.540823,0.9995346
+		c-0.2655401,0.3497353-0.4517088,0.7935982-0.2993908,1.2314415c0.0994663,0.2859173,0.3172712,0.5152512,0.55264,0.7057114
+		C15.4103737,25.8118305,16.9908943,26.2155857,18.6287518,26.3418198z"/><linearGradient id="SVGID_7_" x1="20.79" x2="24.812" y1="23.823" y2="23.823" gradientUnits="userSpaceOnUse"><stop offset=".571" stop-color="#ff9532"/><stop offset="1" stop-color="#ffec87"/></linearGradient><circle cx="22.801" cy="23.823" r="2.011" fill="url(#SVGID_7_)"/><circle cx="22.801" cy="23.823" r="1.422" fill="#ffec87"/><rect width=".202" height="2.844" x="22.7" y="22.401" fill="#fff"/><rect width=".202" height="2.844" x="22.7" y="22.401" fill="#fff" transform="rotate(90 22.801 23.823)"/><rect width=".202" height="2.844" x="22.7" y="22.401" fill="#fff" transform="rotate(45 22.801 23.823)"/><rect width=".202" height="2.844" x="22.7" y="22.401" fill="#fff" transform="rotate(138.12 22.801 23.823)"/><linearGradient id="SVGID_8_" x1="14.677" x2="18.576" y1="23.401" y2="23.401" gradientUnits="userSpaceOnUse"><stop offset=".571" stop-color="#ff9532"/><stop offset="1" stop-color="#ffec87"/></linearGradient><circle cx="16.626" cy="23.401" r="1.949" fill="url(#SVGID_8_)"/><circle cx="16.627" cy="23.401" r="1.378" fill="#ffec87"/><rect width=".196" height="2.757" x="16.528" y="22.023" fill="#fff"/><rect width=".196" height="2.757" x="16.528" y="22.023" fill="#fff" transform="rotate(90 16.626 23.401)"/><rect width=".196" height="2.757" x="16.528" y="22.023" fill="#fff" transform="rotate(45 16.626 23.401)"/><rect width=".196" height="2.757" x="16.528" y="22.023" fill="#fff" transform="rotate(138.12 16.626 23.401)"/><circle cx="14.335" cy="18.612" r=".608" fill="#ffdf3d"/><circle cx="27.207" cy="18.27" r=".662" fill="#ffdf3d"/><circle cx="18.192" cy="20.595" r=".547" fill="#ffdf3d"/><linearGradient id="SVGID_9_" x1="12.692" x2="28.555" y1="14.893" y2="14.893" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#b1b1b1"/><stop offset="1" stop-color="#eaeaea"/></linearGradient><path fill="url(#SVGID_9_)" d="M28.5549526,14.5017748v0.7617188c0,0.4570198-0.3712864,0.8188581-0.8283634,0.8188581
+		c-4.8055344,0.4259872-9.5418224,0.4312172-14.2062531,0c-0.4570189,0-0.8283892-0.3618383-0.8283892-0.8188581v-0.7617188
+		c0-0.457077,0.3713341-0.8283749,0.8283939-0.8283749c4.5056963-0.3903227,9.2439375-0.3876562,14.206214,0
+		C28.1836739,13.6733999,28.5549526,14.0446978,28.5549526,14.5017748z"/><linearGradient id="SVGID_10_" x1="16.505" x2="25.074" y1="17.361" y2="17.361" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#b1b1b1"/><stop offset="1" stop-color="#eaeaea"/></linearGradient><path fill="url(#SVGID_10_)" d="M25.0740566,17.0559578v0.6093998c0,0.4570179-0.3713589,0.8188457-0.8283787,0.8188457h-6.9127102
+		c-0.457077,0-0.8283768-0.3618279-0.8283768-0.8188457v-0.6093998c0-0.447546,0.3713245-0.8188572,0.8283863-0.8188572
+		c2.360878,0.2216072,4.6734505,0.2542114,6.9127235,0C24.7027016,16.2371006,25.0740566,16.6084118,25.0740566,17.0559578z"/><linearGradient id="SVGID_11_" x1="19.108" x2="19.209" y1="12.568" y2="27.407" gradientUnits="userSpaceOnUse"><stop offset=".092" stop-color="#a4eeff"/><stop offset=".818" stop-color="#4187ff"/></linearGradient><path fill="url(#SVGID_11_)" d="M31.2268219,13.0044661l-0.2632046,1.4039774l-0.3704967,1.9402046
+		l-0.3120022,1.6867008l-0.8092518,5.6159096l-0.0389786,0.3022423c-0.0584965,0.6044846-0.2730236,1.1699905-0.6142445,1.6379623
+		c-0.5167675,0.7312374-1.3162613,1.2382469-2.2424469,1.3747597c-3.8804703,0.5557461-7.7023849,0.5849648-11.4560442,0.0194588
+		c-1.5307293-0.2242279-2.6812019-1.5112114-2.7981949-3.0613995c-0.2145271-2.8079548-0.448513-3.8707123-0.4582729-3.8804722
+		l-4.7871375-4.4361572c-0.3217611-0.5459881,0.0779557-1.2479467,0.7312369-1.2479467
+		c0.7604551-0.0975342,2.3691998-0.4387541,3.1979113-0.5265284c4.8164158-0.5459881,9.6036129-0.6434622,13.5132427-0.3509798
+		l-0.116993-0.0877743l4.6214676-0.214468C30.2811184,13.1117001,31.5290642,11.7759781,31.2268219,13.0044661z" opacity=".4"/><path fill="#fff" d="M23.2686081,30.1055622c-0.0350113,0.2311192-0.2243576,0.4208088-0.4557343,0.4557343
+		c-1.2482147,0.2033844-2.4894123,0.2033844-3.7376289,0c-0.2243557-0.0421162-0.420723-0.2174244-0.4557323-0.448885
+		c-0.0561543-0.4067707-0.0561543-0.8344269,0.007019-1.262085c0.0350094-0.2454987,0.2383099-0.4276562,0.4838104-0.462923
+		c1.2622547-0.1472321,2.4964314-0.1612701,3.6814747-0.0071907c0.2383957,0.0352669,0.4417801,0.2246151,0.4697723,0.4701138
+		C23.3177414,29.2779846,23.3177414,29.6987934,23.2686081,30.1055622z" opacity=".5"/><g><g><path fill="#fff" d="M21.9710617,30.1565971h-2.0595703c-0.1376953,0-0.25-0.1123047-0.25-0.25s0.1123047-0.25,0.25-0.25
+				h2.0595703c0.1376953,0,0.25,0.1123047,0.25,0.25S22.108757,30.1565971,21.9710617,30.1565971z"/></g><g><path fill="#fff" d="M21.9710617,29.3284721h-2.0595703c-0.1376953,0-0.25-0.1123047-0.25-0.25s0.1123047-0.25,0.25-0.25
+				h2.0595703c0.1376953,0,0.25,0.1123047,0.25,0.25S22.108757,29.3284721,21.9710617,29.3284721z"/></g></g><linearGradient id="SVGID_12_" x1="7.669" x2="7.815" y1="34.945" y2="23.314" gradientUnits="userSpaceOnUse"><stop offset=".092" stop-color="#ff9532"/><stop offset=".841" stop-color="#ffdd79"/><stop offset=".993" stop-color="#ffec87"/></linearGradient><path fill="url(#SVGID_12_)" d="M10.5437851,31.7515182c-1.832634,1.6473465-4.2944479,1.9805222-5.9233804,0.9439392l-0.0185285,0.018528
+		c-0.4257054,0.3146477-0.9811103,0.2591743-1.2772286-0.1110573c-0.2406454-0.3517036-0.1850598-0.8329945,0.1481156-1.1476421
+		c-0.9811103-1.7399902-0.4072895-4.238863,1.4622881-5.9233799c1.8695779-1.6658764,4.3684497-1.999052,5.9973817-0.9069958
+		c0.4072895-0.2775898,0.9625816-0.2035885,1.221756,0.1666431c0.2590609,0.3146477,0.2035885,0.7774086-0.0926428,1.0920563
+		C12.987071,27.6236,12.41325,30.0855274,10.5437851,31.7515182z"/><linearGradient id="SVGID_13_" x1="100.401" x2="102.656" y1="-163.083" y2="-163.083" gradientTransform="rotate(-63.24 207.323 5.783)" gradientUnits="userSpaceOnUse"><stop offset=".004" stop-color="#b3dd54"/><stop offset="1" stop-color="#62c14e"/></linearGradient><path fill="url(#SVGID_13_)" d="M6.9559083,23.2792377c2.1876254-0.6082649,3.6610332,0.1320438,3.9495873,1.7823391
+		C9.3370857,26.1693077,8.0400534,25.4430504,6.9559083,23.2792377z"/><linearGradient id="SVGID_14_" x1="293.122" x2="295.112" y1="-126.909" y2="-126.909" gradientTransform="rotate(-153.794 170.039 -16.996)" gradientUnits="userSpaceOnUse"><stop offset=".004" stop-color="#b3dd54"/><stop offset=".55" stop-color="#62c14e"/></linearGradient><path fill="url(#SVGID_14_)" d="M9.3672619,28.5557976c-0.5554132-1.9252453,0.0852909-3.2317429,1.5391035-3.5004501
+		C11.8972445,26.4299145,11.2674341,27.5806541,9.3672619,28.5557976z"/><circle cx="4.442" cy="28.831" r=".387" fill="#fff"/><circle cx="4.511" cy="30.479" r=".387" fill="#fff"/><circle cx="5.673" cy="29.705" r=".387" fill="#fff"/><linearGradient id="SVGID_15_" x1="13.963" x2="12.86" y1="35.327" y2="27.685" gradientUnits="userSpaceOnUse"><stop offset=".571" stop-color="#ff9532"/><stop offset="1" stop-color="#ffec87"/></linearGradient><circle cx="13.231" cy="30.253" r="3.187" fill="url(#SVGID_15_)"/><circle cx="13.231" cy="30.253" r="2.254" fill="#ffec87"/><rect width=".32" height="4.507" x="13.071" y="27.999" fill="#fff"/><rect width=".32" height="4.507" x="13.071" y="27.999" fill="#fff" transform="rotate(90 13.23 30.253)"/><rect width=".32" height="4.507" x="13.071" y="27.999" fill="#fff" transform="rotate(45 13.23 30.253)"/><linearGradient id="SVGID_16_" x1="20.408" x2="20.489" y1="14.661" y2="10.864" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#b1b1b1"/><stop offset="1" stop-color="#eaeaea"/></linearGradient><path fill="url(#SVGID_16_)" d="M29.8764782,14.3118591c-6.2884388,0.4294662-12.5768776,0.4183798-18.8653145,0.0044336
+		c-0.9805393-0.0645447-1.6861963-1.0637245-1.3292217-1.9792528c0.0539265-0.1383038,0.1186857-0.2734985,0.1958122-0.4050951
+		c0.2326984-0.3970423,0.6728039-0.6299601,1.1313639-0.6688719c6.4072895-0.5437012,12.548233-0.4754715,18.8357544,0.0119305
+		c0.4131775,0.0320292,0.8045673,0.2338877,1.0671463,0.5545034c0.0538673,0.0657759,0.1039677,0.1317644,0.1503239,0.1979713
+		C31.7074947,12.9488926,30.9986877,14.235219,29.8764782,14.3118591z"/><rect width=".32" height="4.507" x="13.071" y="27.999" fill="#fff" transform="rotate(138.12 13.23 30.253)"/><g><path fill="#fff" d="M14.9691095,12.5169497h-2.8544922c-0.1376953,0-0.25-0.1123047-0.25-0.25s0.1123047-0.25,0.25-0.25
+			h2.8544922c0.1376953,0,0.25,0.1123047,0.25,0.25S15.1068048,12.5169497,14.9691095,12.5169497z"/></g><g><path fill="#fff" d="M17.9769211,12.5940981h-1.671875c-0.1376953,0-0.25-0.1123047-0.25-0.25s0.1123047-0.25,0.25-0.25h1.671875
+			c0.1376953,0,0.25,0.1123047,0.25,0.25S18.1146164,12.5940981,17.9769211,12.5940981z"/></g><g><path fill="#65718a" d="M30.9636173,14.4084435l-0.3704967,1.9402046c1.4331932,0.5362282,2.456913,1.9206867,2.456913,3.5391922
+			c0,2.008461-1.5794659,3.6659431-3.578167,3.7634182l-0.0389786,0.3022423
+			c-0.0584965,0.6044846-0.2730236,1.1699905-0.6142445,1.6379623c0.1462116,0.0097599,0.3022423,0.0195198,0.4582138,0.0195198
+			C32.4358521,25.6109829,35,23.037014,35,19.8878403C35,17.3138714,33.2937813,15.1396799,30.9636173,14.4084435z"/></g></g></svg>`,
+        getData: () => smuziData
+      },
+      {
+        id: "vegetables",
+        name: "Овощи",
+        svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 30 C20 30, 20 70, 50 70 C80 70, 80 30, 50 30 Z" fill="#4caf50" stroke="#2e7d32" stroke-width="2"/>
+                <path d="M50 30 L50 20 L45 15 L55 15 L50 20" fill="#2e7d32"/>
+                <path d="M30 40 C40 35, 50 60, 70 50" fill="none" stroke="#2e7d32" stroke-width="2"/>
+                <circle cx="40" cy="50" r="2" fill="#1b5e20"/>
+                <circle cx="60" cy="50" r="2" fill="#1b5e20"/>
+              </svg>`,
+        getData: () => veggieData
+      },
+      {
+        id: "berries",
+        name: "Ягоды",
+        svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="40" cy="40" r="15" fill="#e91e63" stroke="#c2185b" stroke-width="1"/>
+                <circle cx="60" cy="40" r="15" fill="#e91e63" stroke="#c2185b" stroke-width="1"/>
+                <circle cx="50" cy="60" r="15" fill="#e91e63" stroke="#c2185b" stroke-width="1"/>
+                <path d="M50 25 L50 15 L45 10 L55 10 L50 15" fill="#4caf50"/>
+                <path d="M45 10 C25 25, 75 25, 55 10" fill="none" stroke="#4caf50" stroke-width="2"/>
+                <circle cx="40" cy="40" r="5" fill="#c2185b"/>
+                <circle cx="60" cy="40" r="5" fill="#c2185b"/>
+                <circle cx="50" cy="60" r="5" fill="#c2185b"/>
+              </svg>`,
+        getData: () => berryData
+      },
+      {
+        id: "favorites",
+        name: "Избранное",
+        svg: `<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 75 L25 52 C10 39, 15 15, 35 15 C45 15, 50 25, 50 25 C50 25, 55 15, 65 15 C85 15, 90 39, 75 52 Z" fill="#ff6b6b" stroke="#e53935" stroke-width="2"/>
+              </svg>`,
+        getData: () => [...fruitData, ...veggieData, ...berryData].filter(item => item.favorite)
+      }
+    ];
+
+    let selectedGroup = "all";
+let selectedSuppliers = [];
+let cardAnimationDelay = 50; // Задержка для анимации карточек (мс)
+
+// Показать уведомление
+function showToast(message, type = "info") {
+  const toast = document.getElementById("toast");
+  const toastContent = document.getElementById("toastContent");
+  
+  // Установить текст и класс
+  toastContent.textContent = message;
+  toast.className = "toast " + type;
+  
+  // Показать уведомление
+  toast.classList.add("show");
+  
+  // Скрыть через 3 секунды
+  setTimeout(() => {
+    toast.classList.remove("show");
+  }, 3000);
+}
+
+// Отрисовка групп продуктов
+function renderGroups() {
+  const container = document.getElementById('productGroups');
+  
+  productGroups.forEach(group => {
+    const groupElement = document.createElement('div');
+    groupElement.className = `group-card ${group.id === selectedGroup ? 'active' : ''}`;
+    groupElement.dataset.group = group.id;
+    
+    // Добавить счетчик товаров в группе
+    const itemCount = group.getData().length;
+    
+    groupElement.innerHTML = `
+      ${group.svg}
+      <h3>${group.name}</h3>
+      <div class="item-count">${itemCount}</div>
+    `;
+    
+    groupElement.addEventListener('click', () => {
+      // Обновить активную группу
+      document.querySelectorAll('.group-card').forEach(el => {
+        el.classList.remove('active');
+      });
+      groupElement.classList.add('active');
+      selectedGroup = group.id;
+      
+      // Перерисовать товары
+      renderCart();
+    });
+    
+    container.appendChild(groupElement);
+  });
+  
+  // Инициализировать тени прокрутки
+  initScrollShadows();
+}
+
+// Инициализация теней прокрутки
+function initScrollShadows() {
+  const container = document.getElementById('productGroups');
+  const leftShadow = document.querySelector('.scroll-shadow-left');
+  const rightShadow = document.querySelector('.scroll-shadow-right');
+  
+  // Проверка видимости теней при загрузке
+  checkScrollShadows();
+  
+  // Проверка при прокрутке
+  container.addEventListener('scroll', checkScrollShadows);
+  
+  function checkScrollShadows() {
+    // Показать левую тень, если есть прокрутка влево
+    leftShadow.classList.toggle('show-shadow', container.scrollLeft > 0);
+    
+    // Показать правую тень, если есть прокрутка вправо
+    const hasRightScroll = container.scrollWidth > container.clientWidth + container.scrollLeft;
+    rightShadow.classList.toggle('show-shadow', hasRightScroll);
+  }
+}
+
+// Отрисовка корзины товаров
+function renderCart() {
+  const cartContainer = document.getElementById('cart');
+  cartContainer.innerHTML = '';
+  
+  // Получить данные выбранной группы
+  const groupData = productGroups.find(group => group.id === selectedGroup).getData();
+  
+  // Фильтрация по поставщикам, если выбраны
+  let filteredData = groupData;
+  if (selectedSuppliers.length > 0) {
+    filteredData = groupData.filter(item => selectedSuppliers.includes(item.supplier));
+  }
+  
+  // Проверка на пустую корзину
+  if (filteredData.length === 0) {
+    cartContainer.innerHTML = `
+      <div class="empty-cart">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="9" cy="21" r="1"></circle>
+          <circle cx="20" cy="21" r="1"></circle>
+          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+        </svg>
+        <h3>Корзина пуста</h3>
+        <p>Добавьте товары в корзину или выберите другую группу</p>
+      </div>
+    `;
+    updateSummary(filteredData);
+    return;
+  }
+  
+  // Отрисовка товаров
+  filteredData.forEach((item, index) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.style.animationDelay = `${index * cardAnimationDelay}ms`;
+    
+    card.innerHTML = `
+    <a href="${item.link}" target="_blank">
+      <img class="card-image" src="${item.image}" alt="${item.name}">
+    </a>
+      <div class="card-content">
+        <h2 class="card-title">${item.name}</h2>
+        <div class="card-meta">
+          <span class="supplier-badge">${item.supplier}</span>
+          <span class="price-tag">${item.price}₽/${item.unit}</span>
+        </div>
+        <div class="quantity-controls">
+          <button class="quantity-btn decrease" data-id="${item.id}">-</button>
+          <span class="quantity-value">${item.quantity}</span>
+          <button class="quantity-btn increase" data-id="${item.id}">+</button>
+        </div>
+      </div>
+      <div class="card-actions">
+        <div class="card-price">${item.price * item.quantity}₽ <span>за ${item.quantity} ${item.unit}</span></div>
+        <button class="favorite-btn ${item.favorite ? 'active' : ''}" data-id="${item.id}">
+          <svg class="favorite-icon" width="24" height="24" viewBox="0 0 24 24">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+    
+    cartContainer.appendChild(card);
+  });
+  
+  // Добавить обработчики событий для кнопок
+  addEventListeners();
+  
+  // Обновить итоги
+  updateSummary(filteredData);
+}
+
+// Добавление обработчиков событий
+function addEventListeners() {
+  // Кнопки увеличения/уменьшения количества
+  document.querySelectorAll('.quantity-btn.increase').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const itemId = parseInt(btn.dataset.id);
+      updateQuantity(itemId, 1);
+    });
+  });
+  
+  document.querySelectorAll('.quantity-btn.decrease').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const itemId = parseInt(btn.dataset.id);
+      updateQuantity(itemId, -1);
+    });
+  });
+  
+  // Кнопки избранного
+  document.querySelectorAll('.favorite-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const itemId = parseInt(btn.dataset.id);
+      toggleFavorite(itemId);
+    });
+  });
+  
+  // Фильтры поставщиков
+  document.querySelectorAll('.supplier-filter').forEach(filter => {
+    filter.addEventListener('click', () => {
+      const supplier = filter.dataset.supplier;
+      
+      if (filter.classList.contains('selected')) {
+        filter.classList.remove('selected');
+        selectedSuppliers = selectedSuppliers.filter(s => s !== supplier);
+      } else {
+        filter.classList.add('selected');
+        selectedSuppliers.push(supplier);
+      }
+      
+      renderCart();
+    });
+  });
+  
+  // Кнопка оформления заказа
+  document.getElementById('checkoutBtn').addEventListener('click', () => {
+    checkout();
+  });
+}
+
+// Обновление количества товара
+function updateQuantity(itemId, change) {
+  // Найти товар во всех группах данных
+  let foundItem = null;
+  let allData = [...fruitData, ...veggieData, ...berryData];
+  
+  foundItem = allData.find(item => item.id === itemId);
+  
+  if (foundItem) {
+    // Обновить количество, но не меньше 1
+    foundItem.quantity = Math.max(1, foundItem.quantity + change);
+    
+    // Перерисовать корзину
+    renderCart();
+    
+    // Показать уведомление
+    if (change > 0) {
+      showToast("Количество товара увеличено", "info");
+    } else {
+      showToast("Количество товара уменьшено", "info");
+    }
+  }
+}
+
+// Переключение избранного статуса
+function toggleFavorite(itemId) {
+  // Найти товар во всех группах данных
+  let foundItem = null;
+  let allData = [...fruitData, ...veggieData, ...berryData];
+  
+  foundItem = allData.find(item => item.id === itemId);
+  
+  if (foundItem) {
+    // Переключить статус избранного
+    foundItem.favorite = !foundItem.favorite;
+    
+    // Перерисовать корзину
+    renderCart();
+    
+    // Показать уведомление
+    if (foundItem.favorite) {
+      showToast("Товар добавлен в избранное", "success");
+    } else {
+      showToast("Товар удален из избранного", "info");
+    }
+  }
+}
+
+// Обновление итогов корзины
+function updateSummary(data) {
+  const totalItems = data.reduce((sum, item) => sum + item.quantity, 0);
+  const totalPrice = data.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  
+  document.getElementById('total-items').textContent = totalItems;
+  document.getElementById('total-price').textContent = totalPrice;
+}
+
+// Оформление заказа
+function checkout() {
+  // Получить данные выбранной группы
+  const groupData = productGroups.find(group => group.id === selectedGroup).getData();
+  
+  // Фильтрация по поставщикам, если выбраны
+  let filteredData = groupData;
+  if (selectedSuppliers.length > 0) {
+    filteredData = groupData.filter(item => selectedSuppliers.includes(item.supplier));
+  }
+  
+  // Проверка на пустую корзину
+  if (filteredData.length === 0) {
+    showToast("Добавьте товары в корзину", "info");
+    return;
+  }
+  
+  // Имитация оформления заказа
+  showToast("Заказ успешно оформлен!", "success");
+  
+  // Здесь можно добавить логику для оформления заказа
+  console.log("Оформление заказа:", filteredData);
+}
+
+// Инициализация приложения
+function init() {
+  renderGroups();
+  renderCart();
+  addEventListeners();
+}
+
+// Запуск приложения при загрузке страницы
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
