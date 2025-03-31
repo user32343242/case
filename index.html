@@ -996,7 +996,7 @@ function addEventListeners() {
 function updateQuantity(itemId, change) {
   // Найти товар во всех группах данных
   let foundItem = null;
-  let allData = [...fruitData, ...veggieData, ...berryData];
+  let allData = [...fruitData, ...veggieData, ...berryData, ...smuziData];
   
   foundItem = allData.find(item => item.id === itemId);
   
